@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">VisMobile</string>
+
+    <string name="espectro">Espectro</string>
+    <string name="vis2048">VIS2048</string>
+    <string name="conexao">Conexão</string>
+    <string name="pca">PCA</string>
+    <string name="action_settings">Settings</string>
+    <string name="abrir...">Abrir...</string>
+    <string name="salvar...">Salvar...</string>
+    <string name="exportar_csv">Exportar (csv)</string>
+    <string name="exportar_imagem">Exportar imagem (jpeg, png)...</string>
+    <string name="adquirir">Adquirir</string>
+    <string name="parar">Parar</string>
+    <string name="conectar">Conectar</string>
+    <string name="modo_de_operacao">Modo de Operação</string>
+    <string name="unidade">Unidade</string>
+    <string name="unico">Único</string>
+    <string name="continuo">Contínuo</string>
+    <string name="counts">Counts</string>
+    <string name="mv">mV</string>
+    <string name="numero_de_amostras">Número de Amostras</string>
+    <string name="tempo_de_integracao">Tempo de Integração</string>
+    <string name="faixa_expectral">Faixa Espectral</string>
+    <string name="solucao">Solução</string>
+    <string name="renomear">Renomear</string>
+    <string name="salvar">Salvar</string>
+    <string name="title_activity_tab1">Tab1</string>
+    <string name="title_activity_tab2">Tab2</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
