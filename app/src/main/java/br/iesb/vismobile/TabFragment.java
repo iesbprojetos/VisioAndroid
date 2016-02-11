@@ -1,12 +1,17 @@
 package br.iesb.vismobile;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Toast;
 
 
 /**
@@ -22,6 +27,10 @@ public class TabFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    private static RadioGroup radioGroup;
+    private static RadioButton radioContinuo, radioUnico, radiomV, radioCounts;
+    private static Button button;
 
     // TODO: Rename and c/ahange types of parameters
     private String mParam1;
@@ -64,7 +73,19 @@ public class TabFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_tab, container, false);
+        final View view = inflater.inflate(R.layout.fragment_tab, container, false);
+        radioGroup = (RadioGroup) view.findViewById(R.id.rgroup);
+        button = (Button) view.findViewById(R.id.rb_adquirir);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int select_id = radioGroup.getCheckedRadioButtonId();
+                radioContinuo = (RadioButton) view.findViewById(select_id);
+                Toast.makeText(getActivity(), radioContinuo.getText().toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        return view;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -74,13 +95,17 @@ public class TabFragment extends Fragment {
         }
     }
 
+    public void onClickListenerButton() {
+
+    }
+
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (OnFragmentInteractionListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
+            throw new ClassCastException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
     }

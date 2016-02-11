@@ -1,13 +1,161 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="br.iesb.vismobile.TabFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:id="@+id/Espectro"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#000033"
+            android:orientation="vertical"
+            tools:context=".MainActivity">
 
-</FrameLayout>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/espectro"
+                android:textColor="#d1cdcd" />
+
+            <Button
+                android:id="@+id/rb_adquirir"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/adquirir" />
+
+            <Button
+                android:id="@+id/parar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/parar" />
+
+            <EditText
+                android:id="@+id/conexao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/conexao"
+                android:textColor="#d1cdcd" />
+
+            <Button
+                android:id="@+id/conectar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/conectar" />
+
+            <EditText
+                android:id="@+id/modo_de_operacao"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/modo_de_operacao"
+                android:textColor="#d1cdcd" />
+
+            <RadioGroup
+                android:id="@+id/rgroup"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/unico"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/unico"
+                    android:textColor="#d1cdcd" />
+
+                <RadioButton
+                    android:id="@+id/continuo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/continuo"
+                    android:textColor="#d1cdcd" />
+            </RadioGroup>
+
+            <EditText
+                android:id="@+id/unidade"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/unidade"
+                android:textColor="#d1cdcd" />
+
+            <RadioGroup
+                android:id="@+id/rgroup_unidade"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/counts"
+                    android:textColor="#d1cdcd" />
+
+                <RadioButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:text="@string/mv"
+                    android:textColor="#d1cdcd" />
+            </RadioGroup>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/numero_de_amostras"
+                android:textColor="#d1cdcd" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/tempo_de_integracao"
+                android:textColor="#d1cdcd" />
+
+            <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:editable="false"
+                android:text="@string/faixa_expectral"
+                android:textColor="#d1cdcd" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#ffffff"
+                    android:editable="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/PCA"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"></LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/Conexão"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"></LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
