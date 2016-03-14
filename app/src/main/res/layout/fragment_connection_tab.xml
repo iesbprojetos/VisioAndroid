@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="br.iesb.vismobile.TabFragment">
+    tools:context=".ConnectionTabFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -10,10 +10,9 @@
         <LinearLayout
             android:id="@+id/Espectro"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:background="#000033"
-            android:orientation="vertical"
-            tools:context=".MainActivity">
+            android:orientation="vertical">
 
             <EditText
                 android:layout_width="match_parent"
@@ -23,13 +22,13 @@
                 android:textColor="#d1cdcd" />
 
             <Button
-                android:id="@+id/rb_adquirir"
+                android:id="@+id/btnAdquirir"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/adquirir" />
 
             <Button
-                android:id="@+id/parar"
+                android:id="@+id/btnParar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/parar" />
@@ -42,8 +41,35 @@
                 android:text="@string/conexao"
                 android:textColor="#d1cdcd" />
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/txtDispositivos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="Dispositivo:"
+                    android:textColor="#d1cdcd"
+                    />
+                <Spinner
+                    android:id="@+id/spinDispositivo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/txtDispositivos"
+                    android:layout_toEndOf="@+id/txtDispositivos"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"/>
+            </RelativeLayout>
+
             <Button
-                android:id="@+id/conectar"
+                android:id="@+id/btnConectar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/conectar" />
@@ -57,20 +83,20 @@
                 android:textColor="#d1cdcd" />
 
             <RadioGroup
-                android:id="@+id/rgroup"
+                android:id="@+id/rgroupModoOperacao"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
                 <RadioButton
-                    android:id="@+id/unico"
+                    android:id="@+id/radioUnico"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/unico"
-                    android:textColor="#d1cdcd" />
+                    android:textColor="#d1cdcd"/>
 
                 <RadioButton
-                    android:id="@+id/continuo"
+                    android:id="@+id/radioContinuo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/continuo"

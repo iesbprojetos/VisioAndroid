@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.hardware.usb.UsbDevice;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
@@ -16,6 +17,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import br.iesb.vismobile.BuildConfig;
@@ -28,6 +30,8 @@ import br.iesb.vismobile.R;
  * Created by dfcarvalho on 11/12/15.
  */
 public class DevicePickerDialogFragment extends DialogFragment {
+
+    private List<UsbDevice> devices;
 
     /**
      * Construtor
@@ -57,30 +61,16 @@ public class DevicePickerDialogFragment extends DialogFragment {
         LayoutInflater inflater = activity.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.fragment_device_picker_dialog, null);
         ListView listViewDevices = (ListView) dialogView.findViewById(R.id.listViewDevices);
-        // TODO: create custom adapter
-        ListAdapter adapter = null;
-        if (BuildConfig.MOCK_DEVICE) {
-            List<String> devices = new ArrayList<>(1);
-            devices.add("MOCK_DEVICE");
-            adapter = new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, devices);
-        } else {
-            List<UsbDevice> devices = usbConnection.getDeviceList();
-            adapter = new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, devices);
-        }
+        devices = usbConnection.getDeviceList();
+        final List<String> deviceDescriptions = getDeviceDescriptions();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_list_item_1, deviceDescriptions);
 
         listViewDevices.setAdapter(adapter);
-        // TODO: set listViewDevices onClickListener
         listViewDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
-                if (BuildConfig.MOCK_DEVICE) {
-                    String mockDevice = (String) adapter.getItemAtPosition(position);
-                    usbConnection.mockRequestPermission(mockDevice);
-                } else {
-                    UsbDevice device = (UsbDevice) adapter.getItemAtPosition(position);
-                    usbConnection.requestPermission(device);
-                }
-
+                UsbDevice device = devices.get(position);
+                usbConnection.requestPermission(device);
                 dismiss();
             }
         });
@@ -98,5 +88,23 @@ public class DevicePickerDialogFragment extends DialogFragment {
                 });
 
         return builder.create();
+    }
+
+    public List<String> getDeviceDescriptions() {
+        List<String> descriptions = new ArrayList<>();
+
+        for (UsbDevice device : devices) {
+            String description;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                description = String.format("%s - %s\n%s", device.getManufacturerName(), device.getProductName(), device.getDeviceName());
+            } else {
+                description = device.getDeviceName();
+            }
+
+            descriptions.add(description);
+        }
+
+        return descriptions;
     }
 }

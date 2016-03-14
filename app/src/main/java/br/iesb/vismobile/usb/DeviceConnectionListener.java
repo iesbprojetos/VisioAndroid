@@ -1,7 +1,5 @@
 package br.iesb.vismobile.usb;
 
-import android.hardware.usb.UsbDevice;
-
 /**
  * Interface DeviceConnectionListener
  * Deve ser implementada por classes que precisam receber notificações sobre a comunicação com o
@@ -9,10 +7,11 @@ import android.hardware.usb.UsbDevice;
  * Created by dfcarvalho on 11/12/15.
  */
 public interface DeviceConnectionListener {
-    void onDevicePermissionGranted(UsbDevice device);
+    void onDeviceConnected();
+    void onDeviceDisconnected();
     void onDevicePermissionDenied();
-    void onDeviceConnected(UsbDevice device);
+    void onDeviceClaimFailed();
     void onDeviceWriteOperationFailed();
+    void onDeviceRead(double[] data);
     void onDeviceReadOperationFailed();
-    void onDeviceShowInfo(UsbDevice device);
 }
