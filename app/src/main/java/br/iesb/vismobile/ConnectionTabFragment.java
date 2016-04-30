@@ -1,5 +1,6 @@
 package br.iesb.vismobile;
 
+import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,11 +14,18 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import br.iesb.vismobile.file.ChartData;
+import br.iesb.vismobile.file.FileManager;
 import br.iesb.vismobile.usb.DeviceConnectionListener;
 import br.iesb.vismobile.usb.UsbConnection;
 
@@ -27,17 +35,30 @@ import br.iesb.vismobile.usb.UsbConnection;
  * create an instance of this fragment.
  */
 public class ConnectionTabFragment extends Fragment implements DeviceConnectionListener {
-    private RadioGroup radioGroupOperacao;
-    private RadioButton radioContinuo, radioUnico, radiomV, radioCounts;
+    private View view;
+
+    private RadioGroup radioGroupOperacao, radioGroupUnidade;
+    private RadioButton radioContinuo, radioUnico, radioUndCounts, radioUndMV;
     private Button btnAdquirir;
     private Button btnParar;
     private Button btnConectar;
     private Spinner spinDispositivos;
+    private SeekBar seekNumAmostras;
+    private TextView txtNumAmostras;
+    private SeekBar seekTempoIntegra;
+    private TextView txtTempoIntegra;
     private UsbConnection usbConn;
     private List<UsbDevice> devices;
 
+    private FileManager fileManager;
+    private int chartCount;
+
+    private OnFragmentInteractionListener listener;
+
     public ConnectionTabFragment() {
         // Required empty public constructor
+        fileManager = FileManager.getSingleton(getContext());
+        chartCount = 0;
     }
 
     /**
@@ -54,11 +75,24 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         usbConn = UsbConnection.getSingleton(getContext(), this);
+        setRetainInstance(true);
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            listener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
     }
 
     @Override
     public void onDestroy() {
         usbConn.removeListener(this);
+//        usbConn.release();
         usbConn = null;
         super.onDestroy();
     }
@@ -66,23 +100,56 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        if (view == null) {
+            createView(inflater, container, savedInstanceState);
+        }
+
+        return view;
+    }
+
+    private void createView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        final View view = inflater.inflate(R.layout.fragment_connection_tab, container, false);
+        view = inflater.inflate(R.layout.fragment_connection_tab, container, false);
         radioGroupOperacao = (RadioGroup) view.findViewById(R.id.rgroupModoOperacao);
         radioUnico = (RadioButton) view.findViewById(R.id.radioUnico);
+        radioUnico.setChecked(true);
         radioContinuo = (RadioButton) view.findViewById(R.id.radioContinuo);
+
+        radioGroupUnidade = (RadioGroup) view.findViewById(R.id.rgroupUnidade);
+        radioUndCounts = (RadioButton) view.findViewById(R.id.radioUndCounts);
+        radioUndCounts.setChecked(true);
+        radioUndMV = (RadioButton) view.findViewById(R.id.radioUndMV);
+        radioGroupUnidade.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                switch (checkedId) {
+                    case R.id.radioUndCounts:
+                        fileManager.setMiliVolts(false);
+                        break;
+                    case R.id.radioUndMV:
+                        fileManager.setMiliVolts(true);
+                        break;
+                }
+
+                // redesenhar grafico
+                listener.onUnitChanged();
+
+            }
+        });
 
         btnAdquirir = (Button) view.findViewById(R.id.btnAdquirir);
         btnAdquirir.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int selectedId = radioGroupOperacao.getCheckedRadioButtonId();
-                switch (selectedId) {
+                int checkedId = radioGroupOperacao.getCheckedRadioButtonId();
+                switch (checkedId) {
                     case R.id.radioUnico:
                         usbConn.readOnce();
                         break;
                     case R.id.radioContinuo:
                         usbConn.startReadingData();
+                        btnAdquirir.setEnabled(false);
+                        btnParar.setEnabled(true);
                         break;
                     default:
                         Snackbar.make(view, "Selecione um Modo de Operação", Snackbar.LENGTH_SHORT).show();
@@ -90,6 +157,7 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
                 }
             }
         });
+        btnAdquirir.setEnabled(false);
 
         btnParar = (Button) view.findViewById(R.id.btnParar);
         btnParar.setEnabled(false);
@@ -113,31 +181,92 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
                     usbConn.disconnect();
                 } else {
                     int pos = spinDispositivos.getSelectedItemPosition();
-                    if (pos >= 0 && devices != null && devices.size() > pos) {
+                    if (BuildConfig.MOCK_DEVICE) {
+                        if (pos == 0) {
+                            // mock device
+                            usbConn.setConnectedToMockDevice(true);
+                            onDeviceConnected();
+                            return;
+                        }
+                        pos--;
+                    }
+
+                    try {
                         UsbDevice device = devices.get(pos);
                         usbConn.requestPermission(device);
                         btnConectar.setText("Conectando");
                         btnConectar.setEnabled(false);
-                    } else {
+                    } catch (IndexOutOfBoundsException | NullPointerException e) {
                         Snackbar.make(view, "Nenhum dispositivo selecionado.", Snackbar.LENGTH_SHORT).show();
                     }
                 }
             }
         });
+        if (usbConn.isConnected()) {
+            onDeviceConnected();
+        } else {
+            onDeviceDisconnected();
+        }
 
-        return view;
+        txtNumAmostras = (TextView) view.findViewById(R.id.txtNumAmostras);
+        txtNumAmostras.setText(String.valueOf(usbConn.getSampleSize()));
+
+        seekNumAmostras = (SeekBar) view.findViewById(R.id.seekNumAmostras);
+        seekNumAmostras.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtNumAmostras.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                usbConn.setSampleSize(seekBar.getProgress());
+            }
+        });
+        seekNumAmostras.setProgress(usbConn.getSampleSize());
+
+        txtTempoIntegra = (TextView) view.findViewById(R.id.txtTempoIntegra);
+        // TODO:
+        txtTempoIntegra.setText(String.valueOf(2048));
+
+        seekTempoIntegra = (SeekBar) view.findViewById(R.id.seekTempoIntegra);
+        seekTempoIntegra.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtTempoIntegra.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // TODO:
+//                usbConn.setSampleSize(seekBar.getProgress());
+            }
+        });
+
+        // TODO:
+        seekTempoIntegra.setProgress(2048);
     }
 
     @Override
     public void onDeviceConnected() {
         btnConectar.setText("Desconectar");
         btnConectar.setEnabled(true);
+        btnAdquirir.setEnabled(true);
     }
 
     @Override
     public void onDeviceDisconnected() {
         btnConectar.setText("Conectar");
         btnConectar.setEnabled(true);
+        btnAdquirir.setEnabled(false);
     }
 
     @Override
@@ -159,10 +288,31 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
     @Override
     public void onDeviceRead(double[] data) {
         Log.d("Visio", "Bytes read: " + data);
+
+        Map<Integer, Double> chartDataMap = new TreeMap<>();
+        for (int i = 0; i < data.length; i++) {
+            chartDataMap.put(i, data[i]);
+        }
+
+        ChartData chartData = new ChartData(
+                String.format("Chart_%d", chartCount++),
+                "",
+                new Date().getTime(),
+                chartDataMap
+        );
+
+        fileManager.getCollection().addChartData(chartData);
+    }
+
+    @Override
+    public void onDeviceStopReading() {
+        btnAdquirir.setEnabled(true);
+        btnParar.setEnabled(false);
     }
 
     @Override
     public void onDeviceReadOperationFailed() {
+        onDeviceStopReading();
         // TODO:
     }
 
@@ -170,6 +320,10 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
         devices = usbConn.getDeviceList();
 
         List<String> descriptions = new ArrayList<>();
+
+        if (BuildConfig.MOCK_DEVICE) {
+            descriptions.add("MOCK_DEVICE");
+        }
 
         for (UsbDevice device : devices) {
             String description;
@@ -184,5 +338,9 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
         }
 
         return descriptions;
+    }
+
+    public interface OnFragmentInteractionListener {
+        void onUnitChanged();
     }
 }

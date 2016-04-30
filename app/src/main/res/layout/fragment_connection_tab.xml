@@ -12,7 +12,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#000033"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="8dp">
 
             <EditText
                 android:layout_width="match_parent"
@@ -112,17 +113,19 @@
                 android:textColor="#d1cdcd" />
 
             <RadioGroup
-                android:id="@+id/rgroup_unidade"
+                android:id="@+id/rgroupUnidade"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <RadioButton
+                    android:id="@+id/radioUndCounts"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/counts"
                     android:textColor="#d1cdcd" />
 
                 <RadioButton
+                    android:id="@+id/radioUndMV"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:checked="false"
@@ -137,9 +140,29 @@
                 android:text="@string/numero_de_amostras"
                 android:textColor="#d1cdcd" />
 
-            <SeekBar
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
+                <SeekBar
+                    android:id="@+id/seekNumAmostras"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_toLeftOf="@+id/txtNumAmostras"
+                    android:layout_toStartOf="@+id/txtNumAmostras"
+                    android:max="2048"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="8dp"/>
+                <TextView
+                    android:id="@+id/txtNumAmostras"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="@android:color/white"
+                    android:text="0000"/>
+            </RelativeLayout>
 
             <EditText
                 android:layout_width="match_parent"
@@ -148,9 +171,30 @@
                 android:text="@string/tempo_de_integracao"
                 android:textColor="#d1cdcd" />
 
-            <SeekBar
+
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
+                <SeekBar
+                    android:id="@+id/seekTempoIntegra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_toLeftOf="@+id/txtTempoIntegra"
+                    android:layout_toStartOf="@+id/txtTempoIntegra"
+                    android:max="2048"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="8dp"/>
+                <TextView
+                    android:id="@+id/txtTempoIntegra"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="@android:color/white"
+                    android:text="0000"/>
+            </RelativeLayout>
 
             <EditText
                 android:layout_width="match_parent"

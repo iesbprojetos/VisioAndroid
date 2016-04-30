@@ -13,5 +13,6 @@ public interface DeviceConnectionListener {
     void onDeviceClaimFailed();
     void onDeviceWriteOperationFailed();
     void onDeviceRead(double[] data);
+    void onDeviceStopReading();
     void onDeviceReadOperationFailed();
 }

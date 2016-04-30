@@ -32,6 +32,7 @@ import br.iesb.vismobile.R;
 public class DevicePickerDialogFragment extends DialogFragment {
 
     private List<UsbDevice> devices;
+    private UsbConnection usbConnection;
 
     /**
      * Construtor
@@ -56,7 +57,7 @@ public class DevicePickerDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Activity activity = getActivity();
         // TODO: o que fazer com o listener?
-        final UsbConnection usbConnection = UsbConnection.getSingleton(activity.getApplicationContext(), null);
+        usbConnection = UsbConnection.getSingleton(activity.getApplicationContext(), null);
 
         LayoutInflater inflater = activity.getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.fragment_device_picker_dialog, null);
@@ -88,6 +89,14 @@ public class DevicePickerDialogFragment extends DialogFragment {
                 });
 
         return builder.create();
+    }
+
+    @Override
+    public void onDestroyView() {
+//        usbConnection.release();
+        usbConnection = null;
+
+        super.onDestroyView();
     }
 
     public List<String> getDeviceDescriptions() {

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
@@ -15,17 +16,16 @@ import android.widget.Toast;
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import br.iesb.vismobile.BuildConfig;
 
 /**
  * Classe UsbConnection (Singleton)
@@ -35,19 +35,39 @@ import java.util.concurrent.Executors;
  */
 public class UsbConnection {
     private static UsbConnection SINGLETON = null;
+//    private static int counter = 0;
+
     private static final String ACTION_USB_PERMISSION = "br.iesb.vismobile.USB_PERMISSION";
 
+    public static final String PREFS = "CONN_PREFS";
+    public static final String PREF_BAUD_RATE = "BAUD_RATE";
+    public static final String PREF_DATA_BITS = "DATA_BITS";
+    public static final String PREF_STOP_BITS = "STOP_BITS";
+    public static final String PREF_PARIDADE = "PARIDADE";
+
+    public static final int STD_BAUD_RATE = 250000;
+    public static final int STD_DATA_BITS = UsbSerialInterface.DATA_BITS_8;
+    public static final int STD_STOP_BITS = 0;
+    public static final int STD_PARIDADE = UsbSerialInterface.PARITY_NONE;
+    public static final int STD_SAMPLE_SIZE = 2048;
+
     private Context context;
+    private SharedPreferences prefs;
     private Set<DeviceConnectionListener> listeners;
     private UsbManager usbManager;
     private PendingIntent permissionIntent;
     private UsbDevice selectedDevice;
     private UsbDeviceConnection usbConn;
+    private boolean connectedToMockDevice;
     private UsbSerialDevice serialDevice;
     private boolean reading;
     private int sampleSize;
     private byte[] buffer;
     private int currentPos;
+    private int baudRate;
+    private int dataBits;
+    private int stopBits;
+    private int paridade;
 
     private final Object readLock = new Object();
     private final ExecutorService commExecutor = Executors.newSingleThreadExecutor();
@@ -64,10 +84,21 @@ public class UsbConnection {
             SINGLETON = new UsbConnection(context);
         }
 
+//        counter++;
         SINGLETON.addListener(listener);
 
         return SINGLETON;
     }
+
+//    public void release() {
+//        counter--;
+//
+//        if (counter == 0) {
+//            unregisterReceiver();
+//            this.context.recei
+//            SINGLETON = null;
+//        }
+//    }
 
     /**
      * Construtor privado (Singleton Pattern)
@@ -77,16 +108,27 @@ public class UsbConnection {
         this.context = context;
         this.listeners = new HashSet<>();
         usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+
         permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), 0);
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
         context.registerReceiver(usbPermissionReceiver, filter);
+
         mainHandler = new Handler(context.getMainLooper());
-        sampleSize = 2048;
-        buffer = new byte[2048];
+        sampleSize = STD_SAMPLE_SIZE;
+        buffer = new byte[sampleSize];
         currentPos = 0;
+
+        this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+
+        baudRate = prefs.getInt(PREF_BAUD_RATE, STD_BAUD_RATE);
+        dataBits = prefs.getInt(PREF_DATA_BITS, STD_DATA_BITS);
+        stopBits = prefs.getInt(PREF_STOP_BITS, STD_STOP_BITS);
+        paridade = prefs.getInt(PREF_PARIDADE, STD_PARIDADE);
+
+        connectedToMockDevice = false;
     }
 
     /**
@@ -104,6 +146,54 @@ public class UsbConnection {
         return deviceList;
     }
 
+    public int getBaudRate() {
+        return baudRate;
+    }
+
+    public void setBaudRate(int baudRate) {
+        this.baudRate = baudRate;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(PREF_BAUD_RATE, baudRate);
+        editor.apply();
+    }
+
+    public int getDataBits() {
+        return dataBits;
+    }
+
+    public void setDataBits(int dataBits) {
+        this.dataBits = dataBits;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(PREF_DATA_BITS, dataBits);
+        editor.apply();
+    }
+
+    public int getStopBits() {
+        return stopBits;
+    }
+
+    public void setStopBits(int stopBits) {
+        this.stopBits = stopBits;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(PREF_STOP_BITS, stopBits);
+        editor.apply();
+    }
+
+    public int getParidade() {
+        return paridade;
+    }
+
+    public void setParidade(int paridade) {
+        this.paridade = paridade;
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(PREF_PARIDADE, paridade);
+        editor.apply();
+    }
+
     /**
      * Solicita do sistema permissão para acessar um dispositivo USB
      * @param device Dispositivo USB que deseja acessar
@@ -113,11 +203,29 @@ public class UsbConnection {
     }
 
     public boolean isConnected() {
+        if (BuildConfig.MOCK_DEVICE) {
+            if (connectedToMockDevice) {
+                return true;
+            }
+        }
+
         return usbConn != null;
     }
 
     public void disconnect() {
         stopReadingData();
+
+        if (BuildConfig.MOCK_DEVICE) {
+            if (connectedToMockDevice) {
+                connectedToMockDevice = false;
+
+                for (DeviceConnectionListener listener : listeners) {
+                    listener.onDeviceDisconnected();
+                }
+
+                return;
+            }
+        }
 
         serialDevice.close();
         serialDevice = null;
@@ -130,11 +238,16 @@ public class UsbConnection {
         }
     }
 
+    public void setConnectedToMockDevice(boolean connectedToMockDevice) {
+        this.connectedToMockDevice = connectedToMockDevice;
+    }
+
     public int getSampleSize() {
         return sampleSize;
     }
 
     public void setSampleSize(int sampleSize) {
+        stopReadingData();
         this.sampleSize = sampleSize;
     }
 
@@ -145,6 +258,47 @@ public class UsbConnection {
     public void startReadingData() {
         if (!reading) {
             reading = true;
+
+            if (BuildConfig.MOCK_DEVICE) {
+                if (isConnected()) {
+                    commExecutor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (true) {
+                                synchronized (readLock) {
+                                    if (!reading) {
+                                        break;
+                                    }
+                                }
+
+                                byte[] data = new byte[sampleSize];
+                                Random rand = new Random();
+
+                                for (int i = 0; i < sampleSize; i++) {
+                                    synchronized (readLock) {
+                                        if (!reading) {
+                                            break;
+                                        }
+                                    }
+                                    Number value = -50 + (100) * rand.nextDouble();
+                                    data[i] = value.byteValue();
+                                }
+
+                                mReadCallback.onReceivedData(data);
+
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException e) {
+                                    // TODO:
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        }
+                    });
+                    return;
+                }
+            }
 
             commExecutor.submit(new Runnable() {
                 @Override
@@ -173,11 +327,34 @@ public class UsbConnection {
     }
 
     public void readOnce() {
+        if (BuildConfig.MOCK_DEVICE) {
+            if (isConnected()) {
+                byte[] data = new byte[sampleSize];
+
+                Random rand = new Random();
+                for (int i = 0; i < sampleSize; i++) {
+                    Number value;
+                    if (i == 0) {
+                        value = -50 + (100) * rand.nextDouble();
+                    } else {
+                        double min = data[i-1] - 10 >= -50 ? data[i-1] - 10 : data[i-1];
+                        double max = data[i-1] + 10 <= 50 ? data[i-1] + 10 : data[i-1];
+                        value = min + (max - min) * rand.nextDouble();
+                    }
+
+                    data[i] = value.byteValue();
+                }
+
+                mReadOnceCallback.onReceivedData(data);
+                return;
+            }
+        }
+
         commExecutor.submit(new Runnable() {
             @Override
             public void run() {
                 serialDevice.write("+".getBytes());
-                serialDevice.read(mReadCallback);
+                serialDevice.read(mReadOnceCallback);
             }
         });
     }
@@ -185,6 +362,10 @@ public class UsbConnection {
     public void stopReadingData() {
         synchronized (readLock) {
             reading = false;
+        }
+
+        for (DeviceConnectionListener listener : listeners) {
+            listener.onDeviceStopReading();
         }
     }
 
@@ -202,6 +383,10 @@ public class UsbConnection {
         if (listener != null) {
             this.listeners.remove(listener);
         }
+    }
+
+    public BroadcastReceiver getUsbPermissionReceiver() {
+        return usbPermissionReceiver;
     }
 
     /**
@@ -227,9 +412,9 @@ public class UsbConnection {
                             usbConn = usbManager.openDevice(selectedDevice);
                             serialDevice = UsbSerialDevice.createUsbSerialDevice(device, usbConn);
                             if (serialDevice.open()) {
-                                serialDevice.setBaudRate(250000);
-                                serialDevice.setDataBits(UsbSerialInterface.DATA_BITS_8);
-                                serialDevice.setParity(UsbSerialInterface.PARITY_NONE);
+                                serialDevice.setBaudRate(baudRate);
+                                serialDevice.setDataBits(dataBits);
+                                serialDevice.setParity(paridade);
                                 serialDevice.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
 
                                 for (DeviceConnectionListener listener : listeners) {
@@ -265,22 +450,21 @@ public class UsbConnection {
         @Override
         public void onReceivedData(final byte[] bytes) {
             Log.d("Visio", bytes.toString());
+
             for (byte b : bytes) {
+                synchronized (readLock) {
+                    if (!reading) {
+                        return;
+                    }
+                }
+
                 buffer[currentPos++] = b;
 
-                if (currentPos >= buffer.length) {
-                    final double[] valores = new double[sampleSize/8];
-
-                    try {
-                        DataInputStream stream = new DataInputStream(new ByteArrayInputStream(buffer));
-                        for (int i = 0; i < valores.length; i++) {
-                            double valor = stream.readDouble();
-                            valores[i] = valor;
-                        }
-                    } catch (EOFException e) {
-                        Log.e("Visio", "End of stream", e);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                if (currentPos >= sampleSize) {
+                    final double[] valores = new double[sampleSize];
+                    for (int i = 0; i < sampleSize; i++) {
+                        Number num = buffer[i];
+                        valores[i] = num.doubleValue();
                     }
 
                     mainHandler.post(new Runnable() {
@@ -294,24 +478,37 @@ public class UsbConnection {
 
                     buffer = new byte[sampleSize];
                     currentPos = 0;
+                }
+            }
+        }
+    };
 
+    private UsbSerialInterface.UsbReadCallback mReadOnceCallback = new UsbSerialInterface.UsbReadCallback() {
+        @Override
+        public void onReceivedData(final byte[] bytes) {
+            Log.d("Visio", bytes.toString());
 
-//                    if (currentPos + bytes.length >= sampleSize) {
-//                        for (byte b : bytes) {
-//                            buffer[currentPos++] = b;
-//                        }
-//
-//                        for (DeviceConnectionListener listener : listeners) {
-//                            listener.onDeviceRead(buffer);
-//                        }
-//
-//                        buffer = new byte[sampleSize];
-//                        currentPos = 0;
-//                    } else {
-//                        for (byte b : bytes) {
-//                            buffer[currentPos++] = b;
-//                        }
-//                    }
+            for (byte b : bytes) {
+                buffer[currentPos++] = b;
+
+                if (currentPos >= sampleSize) {
+                    final double[] valores = new double[sampleSize];
+                    for (int i = 0; i < sampleSize; i++) {
+                        Number num = buffer[i];
+                        valores[i] = num.doubleValue();
+                    }
+
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (DeviceConnectionListener listener : listeners) {
+                                listener.onDeviceRead(valores);
+                            }
+                        }
+                    });
+
+                    buffer = new byte[sampleSize];
+                    currentPos = 0;
                 }
             }
         }

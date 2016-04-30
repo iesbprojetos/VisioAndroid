@@ -5,7 +5,7 @@
     <string name="vis2048">VIS2048</string>
     <string name="conexao">Conexão</string>
     <string name="pca">PCA</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Opções</string>
     <string name="abrir...">Abrir...</string>
     <string name="salvar...">Salvar...</string>
     <string name="exportar_csv">Exportar (csv)</string>
@@ -30,4 +30,5 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_options">OptionsActivity</string>
 </resources>
