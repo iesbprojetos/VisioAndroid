@@ -15,6 +15,11 @@
         android:orderInCategory="2"
         app:showAsAction="never"/>
     <item
+        android:id="@+id/action_pca"
+        android:title="PCA"
+        android:orderInCategory="3"
+        app:showAsAction="never"/>
+    <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

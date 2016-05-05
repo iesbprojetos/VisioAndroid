@@ -280,7 +280,7 @@ public class UsbConnection {
                                             break;
                                         }
                                     }
-                                    Number value = -50 + (100) * rand.nextDouble();
+                                    Number value = 0 + (Math.pow(10, -6)) * rand.nextDouble();
                                     data[i] = value.byteValue();
                                 }
 
@@ -335,10 +335,10 @@ public class UsbConnection {
                 for (int i = 0; i < sampleSize; i++) {
                     Number value;
                     if (i == 0) {
-                        value = -50 + (100) * rand.nextDouble();
+                        value = 0 + (Math.pow(10, -6)) * rand.nextDouble();
                     } else {
-                        double min = data[i-1] - 10 >= -50 ? data[i-1] - 10 : data[i-1];
-                        double max = data[i-1] + 10 <= 50 ? data[i-1] + 10 : data[i-1];
+                        double min = data[i-1] - Math.pow(10, -2) >= 0 ? data[i-1] - Math.pow(10, -2) : data[i-1];
+                        double max = data[i-1] + Math.pow(10, -2) <= Math.pow(10, -6) ? data[i-1] + Math.pow(10, -2) : data[i-1];
                         value = min + (max - min) * rand.nextDouble();
                     }
 
@@ -363,6 +363,9 @@ public class UsbConnection {
         synchronized (readLock) {
             reading = false;
         }
+
+        currentPos = 0;
+        buffer = new byte[STD_SAMPLE_SIZE];
 
         for (DeviceConnectionListener listener : listeners) {
             listener.onDeviceStopReading();
@@ -476,7 +479,7 @@ public class UsbConnection {
                         }
                     });
 
-                    buffer = new byte[sampleSize];
+                    buffer = new byte[STD_SAMPLE_SIZE];
                     currentPos = 0;
                 }
             }
@@ -507,7 +510,7 @@ public class UsbConnection {
                         }
                     });
 
-                    buffer = new byte[sampleSize];
+                    buffer = new byte[STD_SAMPLE_SIZE];
                     currentPos = 0;
                 }
             }

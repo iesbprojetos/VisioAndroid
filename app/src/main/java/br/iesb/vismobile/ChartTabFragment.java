@@ -156,9 +156,10 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
         chart.setScaleYEnabled(false);
         chart.setPinchZoom(true);
 
-//        YAxis leftAxis = chart.getAxisLeft();
-//        leftAxis.setAxisMinValue(-50);
-//        leftAxis.setAxisMaxValue(50);
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setAxisMinValue(0);
+        Number max = Math.pow(10, -6);
+        leftAxis.setAxisMaxValue(max.floatValue());
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setEnabled(false);
 
@@ -254,12 +255,12 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
 
                 for (int i = 0; i < data.length; i++) {
                     // x label
-                    xVals.add(String.valueOf(i));
+                    xVals.add(String.valueOf(i+1));
 
                     // entry (y, x)
                     Number num = fileManager.isMiliVolts() ? data[i] * 0.8056640625 : data[i];
                     float val = num.floatValue();
-                    Entry entry = new Entry(val, i);
+                    Entry entry = new Entry(val, i+1);
                     entries.add(entry);
                 }
 

@@ -215,6 +215,10 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
         seekNumAmostras.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (progress == 0) {
+                    progress = 1;
+                    seekBar.setProgress(progress);
+                }
                 txtNumAmostras.setText(String.valueOf(progress));
             }
 
@@ -237,6 +241,10 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
         seekTempoIntegra.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (progress == 0) {
+                    progress = 1;
+                    seekBar.setProgress(progress);
+                }
                 txtTempoIntegra.setText(String.valueOf(progress));
             }
 

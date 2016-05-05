@@ -115,6 +115,10 @@ public class MainActivity extends AppCompatActivity
                             .show(getSupportFragmentManager(), "SaveFileDialogFragment");
                 }
                 break;
+            case R.id.action_pca:
+                Intent intent = new Intent(this, PCAActivity.class);
+                startActivity(intent);
+                break;
             case R.id.action_open:
                 // This always works
                 Intent i = new Intent(this, FilePickerActivity.class);
@@ -131,7 +135,6 @@ public class MainActivity extends AppCompatActivity
                 // dangerous. Always use Android's API calls to get paths to the SD-card or
                 // internal memory.
 
-                // TODO: pasta padrão não está funcionando
                 i.putExtra(FilePickerActivity.EXTRA_START_PATH, fileManager.getDefaultFolder().getAbsolutePath());
 
                 startActivityForResult(i, REQUEST_FILE_OPEN);
