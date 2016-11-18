@@ -1,4 +1,4 @@
-package br.iesb.vismobile;
+package br.iesb.vismobile.ui;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,13 +18,16 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import br.iesb.vismobile.file.ChartCollection;
-import br.iesb.vismobile.file.ChartData;
+import br.iesb.vismobile.R;
+import br.iesb.vismobile.ChartCollection;
+import br.iesb.vismobile.ChartData;
 import br.iesb.vismobile.file.FileManager;
 import br.iesb.vismobile.usb.DeviceConnectionListener;
 import br.iesb.vismobile.usb.UsbConnection;
@@ -33,6 +36,8 @@ import br.iesb.vismobile.usb.UsbConnection;
  * A simple {@link Fragment} subclass.
  */
 public class ChartTabFragment extends Fragment implements DeviceConnectionListener {
+    private static final String ARG_FROM_DEVICE = "FROM_DEVICE";
+
     private LineChart chart;
     private ImageButton btnPrevious;
     private ImageButton btnNext;
@@ -44,6 +49,8 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
 
     private int currentGraph;
     private int totalGraphs;
+
+    private boolean fromDevice;
 
     private final ExecutorService convertExecutor = Executors.newSingleThreadExecutor();
     private Handler mainHandler;
@@ -58,22 +65,36 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
      *
      * @return A new instance of fragment ChartTabFragment.
      */
-    public static ChartTabFragment newInstance() {
-        return new ChartTabFragment();
+    public static ChartTabFragment newInstance(boolean fromDevice) {
+        ChartTabFragment fragment = new ChartTabFragment();
+        Bundle args = new Bundle();
+        args.putBoolean(ARG_FROM_DEVICE, fromDevice);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        usbConn = UsbConnection.getSingleton(getContext(), this);
+
         fileManager = FileManager.getSingleton(getContext());
+
+        DeviceConnectionListener listener = null;
+        Bundle args = getArguments();
+        if (args != null) {
+            fromDevice = args.getBoolean(ARG_FROM_DEVICE);
+            if (fromDevice) {
+                listener = this;
+            }
+        }
+        usbConn = UsbConnection.getSingleton(getContext(), listener);
+
         mainHandler = new Handler(getContext().getMainLooper());
     }
 
     @Override
     public void onDestroy() {
         usbConn.removeListener(this);
-//        usbConn.release();
         usbConn = null;
         super.onDestroy();
     }
@@ -96,17 +117,18 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
                         }
 
                         currentGraph--;
-                        Map<Integer, Double> mapData = fileManager.getCollection().getCharData(currentGraph-1).getData();
-                        final double[] data = new double[mapData.values().size()];
-
-                        for (int i = 0; i < mapData.values().size(); i++) {
-                            data[i] = mapData.get(i);
-                        }
+                        ChartCollection collection = fromDevice ? fileManager.getCollection() : fileManager.getPcaCollection();
+                        final Map<Double, Double> mapData = collection.getCharData(currentGraph-1).getData();
+//                        final double[] data = new double[mapData.values().size()];
+//
+//                        for (int i = 0; i < mapData.values().size(); i++) {
+//                            data[i] = mapData.get(i);
+//                        }
 
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                drawGraph(data);
+                                drawGraph(mapData);
                                 txtCurrent.setText(String.valueOf(currentGraph));
                             }
                         });
@@ -127,17 +149,18 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
                         }
 
                         currentGraph++;
-                        Map<Integer, Double> mapData = fileManager.getCollection().getCharData(currentGraph-1).getData();
-                        final double[] data = new double[mapData.values().size()];
-
-                        for (int i = 0; i < mapData.values().size(); i++) {
-                            data[i] = mapData.get(i);
-                        }
+                        ChartCollection collection = fromDevice ? fileManager.getCollection() : fileManager.getPcaCollection();
+                        final Map<Double, Double> mapData = collection.getCharData(currentGraph-1).getData();
+//                        final double[] data = new double[mapData.values().size()];
+//
+//                        for (int i = 0; i < mapData.values().size(); i++) {
+//                            data[i] = mapData.get(i);
+//                        }
 
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                drawGraph(data);
+                                drawGraph(mapData);
 
                                 txtCurrent.setText(String.valueOf(currentGraph));
                             }
@@ -156,10 +179,11 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
         chart.setScaleYEnabled(false);
         chart.setPinchZoom(true);
 
-        YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setAxisMinValue(0);
-        Number max = Math.pow(10, -6);
-        leftAxis.setAxisMaxValue(max.floatValue());
+        if (fromDevice) {
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.setAxisMinValue(0);
+            leftAxis.setAxisMaxValue(100);
+        }
         YAxis rightAxis = chart.getAxisRight();
         rightAxis.setEnabled(false);
 
@@ -172,54 +196,62 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
     }
 
     private void loadData(boolean drawLast) {
-        ChartCollection collection = fileManager.getCollection();
-        int size = collection.size();
-        if (size > 0) {
-            List<Entry> entries = new ArrayList<>();
-            List<String> xVals = new ArrayList<>();
+        ChartCollection collection = fromDevice ? fileManager.getCollection() : fileManager.getPcaCollection();
+        if (collection != null) {
+            int size = collection.size();
+            if (size > 0) {
+                List<Entry> entries = new ArrayList<>();
+                List<String> xVals = new ArrayList<>();
 
-            ChartData data = collection.getCharData(size-1);
-            Map<Integer, Double> values = data.getData();
-            for (int x : values.keySet()) {
-                xVals.add(String.valueOf(x));
+                ChartData data = collection.getCharData(size - 1);
+                Map<Double, Double> values = data.getData();
+                List<Double> keyList = new ArrayList<>();
+                keyList.addAll(values.keySet());
+                Collections.sort(keyList);
 
-                double value = values.get(x);
+                for (Double x : keyList) {
+                    Number numX = x;
+                    int intX = numX.intValue();
+                    xVals.add(String.valueOf(x));
 
-                Number num = value;
-                float val = num.floatValue();
-                Entry entry = new Entry(val, x);
-                entries.add(entry);
-            }
+                    double value = values.get(x);
 
-            LineDataSet dataSet = new LineDataSet(entries, "Dados");
-            dataSet.setDrawCircleHole(false);
-            dataSet.setDrawCircles(false);
-            LineData chartData = new LineData(xVals, dataSet);
-            chart.setData(chartData);
+                    Number num = value;
+                    float val = num.floatValue();
+                    Entry entry = new Entry(val, intX);
+                    entries.add(entry);
+                }
 
-            totalGraphs = size;
-            if (drawLast) {
-                currentGraph = totalGraphs;
-            } else {
-                if (currentGraph < 1 || currentGraph > size) {
+                LineDataSet dataSet = new LineDataSet(entries, "Dados");
+                dataSet.setDrawCircleHole(false);
+                dataSet.setDrawCircles(false);
+                LineData chartData = new LineData(xVals, dataSet);
+                chart.setData(chartData);
+
+                totalGraphs = size;
+                if (drawLast) {
                     currentGraph = totalGraphs;
+                } else {
+                    if (currentGraph < 1 || currentGraph > size) {
+                        currentGraph = totalGraphs;
+                    }
                 }
+
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        chart.notifyDataSetChanged();
+                        chart.invalidate();
+
+                        txtTotal.setText(String.valueOf(totalGraphs));
+                        txtCurrent.setText(String.valueOf(currentGraph));
+                    }
+                });
             }
-
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    chart.notifyDataSetChanged();
-                    chart.invalidate();
-
-                    txtTotal.setText(String.valueOf(totalGraphs));
-                    txtCurrent.setText(String.valueOf(currentGraph));
-                }
-            });
         }
     }
 
-    public void onRedrawDraph(final boolean loadData) {
+    public void onRedrawGraph(final boolean loadData) {
         convertExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -227,17 +259,18 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
                     loadData(false);
                 }
 
-                Map<Integer, Double> mapData = fileManager.getCollection().getCharData(currentGraph-1).getData();
-                final double[] data = new double[mapData.values().size()];
-
-                for (int i = 0; i < mapData.values().size(); i++) {
-                    data[i] = mapData.get(i);
-                }
+                ChartCollection collection = fromDevice ? fileManager.getCollection() : fileManager.getPcaCollection();
+                final Map<Double, Double> mapData = collection.getCharData(currentGraph-1).getData();
+//                final double[] data = new double[mapData.values().size()];
+//
+//                for (int i = 0; i < mapData.values().size(); i++) {
+//                    data[i] = mapData.get(i);
+//                }
 
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        drawGraph(data);
+                        drawGraph(mapData);
 
                         txtCurrent.setText(String.valueOf(currentGraph));
                     }
@@ -246,21 +279,27 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
         });
     }
 
-    private void drawGraph(final double[] data) {
+    private void drawGraph(final Map<Double, Double> data) {
         convertExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 final List<Entry> entries = new ArrayList<>();
                 final List<String> xVals = new ArrayList<>();
 
-                for (int i = 0; i < data.length; i++) {
+                List<Double> keyList = new ArrayList<>();
+                keyList.addAll(data.keySet());
+                Collections.sort(keyList);
+
+                for (Double x : keyList) {
                     // x label
-                    xVals.add(String.valueOf(i+1));
+                    xVals.add(String.valueOf(x));
 
                     // entry (y, x)
-                    Number num = fileManager.isMiliVolts() ? data[i] * 0.8056640625 : data[i];
+                    Number num = fileManager.isMiliVolts() ? data.get(x) * 0.8056640625 : data.get(x);
                     float val = num.floatValue();
-                    Entry entry = new Entry(val, i+1);
+                    Number numX = x;
+                    int intX = numX.intValue();
+                    Entry entry = new Entry(val, intX);
                     entries.add(entry);
                 }
 
@@ -309,7 +348,11 @@ public class ChartTabFragment extends Fragment implements DeviceConnectionListen
     @Override
     public void onDeviceRead(double[] data) {
         if (currentGraph == totalGraphs) {
-            drawGraph(data);
+            Map<Double, Double> mapData = new TreeMap<>();
+            for (int i = 0; i < data.length; i++) {
+                mapData.put((double)i, data[i]);
+            }
+            drawGraph(mapData);
             txtCurrent.setText(String.valueOf(++currentGraph));
         }
         txtTotal.setText(String.valueOf(++totalGraphs));

@@ -1,46 +1,41 @@
-package br.iesb.vismobile;
+package br.iesb.vismobile.ui;
 
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.AlertDialog;
-import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
-import com.google.gson.Gson;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.List;
-
+import br.iesb.vismobile.R;
 import br.iesb.vismobile.file.FileManager;
-import br.iesb.vismobile.ui.NoSwipeViewPager;
-import br.iesb.vismobile.ui.SaveFileDialogFragment;
 
 public class MainActivity extends AppCompatActivity
         implements SaveFileDialogFragment.OnFragmentInteractionListener,
-        ConnectionTabFragment.OnFragmentInteractionListener {
+        ConnectionTabFragment.OnFragmentInteractionListener,
+        ActivityCompat.OnRequestPermissionsResultCallback {
     private static final int REQUEST_FILE_PERMISSION = 1;
     private static final int REQUEST_FILE_OPEN = 2;
 
@@ -49,7 +44,7 @@ public class MainActivity extends AppCompatActivity
     private FileManager fileManager;
     private View mLayoutProgress;
 
-    private Fragment mFragmentChart;
+//    private Fragment mFragmentChart;
 
     private int mShortAnimationDuration;
 
@@ -110,13 +105,30 @@ public class MainActivity extends AppCompatActivity
             case R.id.action_save:
                 if (fileManager.askForStoragePermission(this, REQUEST_FILE_PERMISSION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    String defaultName = fileManager.getDefaultFilename();
-                    SaveFileDialogFragment.newInstance(defaultName)
-                            .show(getSupportFragmentManager(), "SaveFileDialogFragment");
+                    startSaveDialogFragment();
                 }
                 break;
+            case R.id.action_delete:
+                fileManager.deleteCollection();
+                redrawChartTabFragment(true);
+                Snackbar.make(mViewPager, "Dados deletados", Snackbar.LENGTH_LONG)
+                        .setAction("Desfazer", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                fileManager.restoreCollection();
+                                redrawChartTabFragment(true);
+
+                            }
+                        })
+                        .setCallback(new Snackbar.Callback() {
+                            @Override
+                            public void onDismissed(Snackbar snackbar, int event) {
+                                fileManager.deleteCollection();
+                            }
+                        }).show();
+                break;
             case R.id.action_pca:
-                Intent intent = new Intent(this, PCAActivity.class);
+                Intent intent = new Intent(this, PcaTabActivity.class);
                 startActivity(intent);
                 break;
             case R.id.action_open:
@@ -142,6 +154,12 @@ public class MainActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startSaveDialogFragment() {
+        String defaultName = fileManager.getDefaultFilename();
+        SaveFileDialogFragment.newInstance(defaultName)
+                .show(getSupportFragmentManager(), "SaveFileDialogFragment");
     }
 
     private void saveCollection(final String filename, final boolean overwrite) {
@@ -214,6 +232,25 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_FILE_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startSaveDialogFragment();
+                } else {
+                    // TODO:
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                    Toast.makeText(MainActivity.this, "Permissão para acesso à arquivos negada.", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_FILE_OPEN) {
             if (resultCode == RESULT_OK) {
@@ -270,20 +307,17 @@ public class MainActivity extends AppCompatActivity
 
     private void redrawChartTabFragment(boolean reload) {
         // draw graph
-        if (mFragmentChart != null && mFragmentChart instanceof ChartTabFragment) {
-            ChartTabFragment tabFragment = (ChartTabFragment) mFragmentChart;
-            tabFragment.onRedrawDraph(reload);
-
-//            final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-//            ft.detach(mFragmentChart);
-//            ft.attach(mFragmentChart);
-//            ft.commit();
+        Fragment fragment = mTabsPagerAdapter.getFragment(1);
+        if (fragment != null && fragment instanceof ChartTabFragment2) {
+            ChartTabFragment2 tabFragment = (ChartTabFragment2) fragment;
+            tabFragment.onRedrawGraph(reload);
         }
     }
 
     public class TabsPagerAdapter extends FragmentPagerAdapter {
         private final int PAGE_COUNT = 2;
         private final String PAGE_TITLES[] = new String[] {"Conexão", "Gráfico"};
+        private SparseArray<Fragment> fragments = new SparseArray<>();
 
         public TabsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -298,8 +332,8 @@ public class MainActivity extends AppCompatActivity
                     fragment = ConnectionTabFragment.newInstance();
                     break;
                 case 1:
-                    fragment = ChartTabFragment.newInstance();
-                    mFragmentChart = fragment;
+                    fragment = ChartTabFragment2.newInstance(true);
+//                    mFragmentChart = fragment;
                     break;
             }
 
@@ -314,6 +348,23 @@ public class MainActivity extends AppCompatActivity
         @Override
         public CharSequence getPageTitle(int position) {
             return PAGE_TITLES[position];
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment) super.instantiateItem(container, position);
+            fragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            fragments.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        public Fragment getFragment(int position) {
+            return fragments.get(position);
         }
     }
 

@@ -30,5 +30,8 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_options">OptionsActivity</string>
+    <string name="title_activity_options">Opções</string>
+    <string name="title_activity_pca">PCA</string>
+    <string name="title_activity_pca_tab">PCA</string>
+    <string name="section_format">Hello World from section: %1$d</string>
 </resources>

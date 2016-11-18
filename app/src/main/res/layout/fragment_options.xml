@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="br.iesb.vismobile.OptionsActivity"
+    tools:context=".ui.OptionsActivity"
     android:gravity="center_horizontal"
     android:background="#000033"
     android:padding="@dimen/activity_horizontal_margin">

@@ -1,4 +1,4 @@
-package br.iesb.vismobile.file;
+package br.iesb.vismobile;
 
 import java.util.Map;
 
@@ -9,9 +9,9 @@ public class ChartData {
     private String name;
     private String description;
     private Long timestamp;
-    private Map<Integer, Double> data;
+    private Map<Double, Double> data;
 
-    public ChartData(String name, String description, Long timestamp, Map<Integer, Double> data) {
+    public ChartData(String name, String description, Long timestamp, Map<Double, Double> data) {
         this.name = name;
         this.description = description;
         this.timestamp = timestamp;
@@ -30,7 +30,7 @@ public class ChartData {
         return timestamp;
     }
 
-    public Map<Integer, Double> getData() {
+    public Map<Double, Double> getData() {
         return data;
     }
 }

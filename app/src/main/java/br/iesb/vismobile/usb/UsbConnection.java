@@ -49,7 +49,9 @@ public class UsbConnection {
     public static final int STD_DATA_BITS = UsbSerialInterface.DATA_BITS_8;
     public static final int STD_STOP_BITS = 0;
     public static final int STD_PARIDADE = UsbSerialInterface.PARITY_NONE;
-    public static final int STD_SAMPLE_SIZE = 2048;
+    public static final int STD_SAMPLE_SIZE = 1;
+
+    private static final int RESOLUTION = 2048;
 
     private Context context;
     private SharedPreferences prefs;
@@ -118,7 +120,7 @@ public class UsbConnection {
 
         mainHandler = new Handler(context.getMainLooper());
         sampleSize = STD_SAMPLE_SIZE;
-        buffer = new byte[sampleSize];
+        buffer = new byte[RESOLUTION];
         currentPos = 0;
 
         this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -247,7 +249,7 @@ public class UsbConnection {
     }
 
     public void setSampleSize(int sampleSize) {
-        stopReadingData();
+//        stopReadingData();
         this.sampleSize = sampleSize;
     }
 
@@ -256,32 +258,39 @@ public class UsbConnection {
      * Dados lidos são repassados para os listeners através do método onDeviceRead()
      */
     public void startReadingData() {
-        if (!reading) {
-            reading = true;
+        if (!isReading()) {
+            synchronized (readLock) {
+                reading = true;
+            }
 
             if (BuildConfig.MOCK_DEVICE) {
-                if (isConnected()) {
+                if (connectedToMockDevice) {
                     commExecutor.submit(new Runnable() {
                         @Override
                         public void run() {
                             while (true) {
-                                synchronized (readLock) {
-                                    if (!reading) {
-                                        break;
-                                    }
+                                if (!isReading()) {
+                                    break;
                                 }
 
-                                byte[] data = new byte[sampleSize];
+                                byte[] data = new byte[RESOLUTION];
                                 Random rand = new Random();
 
-                                for (int i = 0; i < sampleSize; i++) {
-                                    synchronized (readLock) {
-                                        if (!reading) {
-                                            break;
-                                        }
+                                for (int r = 0; r < RESOLUTION; r++) {
+                                    if (!isReading()) {
+                                        break;
                                     }
-                                    Number value = 0 + (Math.pow(10, -6)) * rand.nextDouble();
-                                    data[i] = value.byteValue();
+
+                                    Number value;
+                                    if (r == 0) {
+                                        value = 100 * rand.nextDouble();
+                                    } else {
+                                        double min = data[r-1] - 15 >= 0 ? data[r-1] - 15 : 0;
+                                        double max = data[r-1] + 15 <= 100 ? data[r-1] + 15 : 100;
+                                        value = min + (max - min) * rand.nextDouble();
+                                    }
+
+                                    data[r] = value.byteValue();
                                 }
 
                                 mReadCallback.onReceivedData(data);
@@ -304,10 +313,8 @@ public class UsbConnection {
                 @Override
                 public void run() {
                     while (true) {
-                        synchronized (readLock) {
-                            if (!reading) {
-                                break;
-                            }
+                        if (!isReading()) {
+                            break;
                         }
 
                         serialDevice.write("+".getBytes());
@@ -328,21 +335,25 @@ public class UsbConnection {
 
     public void readOnce() {
         if (BuildConfig.MOCK_DEVICE) {
-            if (isConnected()) {
-                byte[] data = new byte[sampleSize];
+            if (connectedToMockDevice) {
+                byte[] data = new byte[RESOLUTION];
 
                 Random rand = new Random();
-                for (int i = 0; i < sampleSize; i++) {
+                for (int r = 0; r < RESOLUTION; r++) {
+                    if (!isReading()) {
+                        break;
+                    }
+
                     Number value;
-                    if (i == 0) {
-                        value = 0 + (Math.pow(10, -6)) * rand.nextDouble();
+                    if (r == 0) {
+                        value = 100 * rand.nextDouble();
                     } else {
-                        double min = data[i-1] - Math.pow(10, -2) >= 0 ? data[i-1] - Math.pow(10, -2) : data[i-1];
-                        double max = data[i-1] + Math.pow(10, -2) <= Math.pow(10, -6) ? data[i-1] + Math.pow(10, -2) : data[i-1];
+                        double min = data[r-1] - 15 >= 0 ? data[r-1] - 15 : 0;
+                        double max = data[r-1] + 15 <= 100 ? data[r-1] + 15 : 100;
                         value = min + (max - min) * rand.nextDouble();
                     }
 
-                    data[i] = value.byteValue();
+                    data[r] = value.byteValue();
                 }
 
                 mReadOnceCallback.onReceivedData(data);
@@ -359,13 +370,100 @@ public class UsbConnection {
         });
     }
 
+    public void readUnique() {
+        final int currentSampleSize = sampleSize;
+
+        if (!isReading()) {
+            synchronized (readLock) {
+                reading = true;
+            }
+
+            if (BuildConfig.MOCK_DEVICE) {
+                if (connectedToMockDevice) {
+                    commExecutor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int i = 0; i < currentSampleSize; i++) {
+                                if (!isReading()) {
+                                    break;
+                                }
+
+                                byte[] data = new byte[RESOLUTION];
+                                Random rand = new Random();
+
+                                for (int r = 0; r < RESOLUTION; r++) {
+                                    if (!isReading()) {
+                                        break;
+                                    }
+
+                                    Number value;
+                                    if (r == 0) {
+                                        value = 100 * rand.nextDouble();
+                                    } else {
+                                        double min = data[r-1] - 15 >= 0 ? data[r-1] - 15 : 0;
+                                        double max = data[r-1] + 15 <= 100 ? data[r-1] + 15 : 100;
+                                        value = min + (max - min) * rand.nextDouble();
+                                    }
+
+                                    data[r] = value.byteValue();
+                                }
+
+                                mReadCallback.onReceivedData(data);
+
+//                                try {
+//                                    Thread.sleep(2000);
+//                                } catch (InterruptedException e) {
+//                                    // TODO:
+//                                    e.printStackTrace();
+//                                }
+                            }
+
+                            stopReadingData();
+                        }
+                    });
+                    return;
+                }
+            }
+
+            commExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < currentSampleSize; i++) {
+                        if (!isReading()) {
+                            break;
+                        }
+
+                        serialDevice.write("+".getBytes());
+                        serialDevice.read(mReadCallback);
+
+                        try {
+                            // TODO: alterar tempo de espera de acordo com o slider
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            // TODO:
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    public boolean isReading() {
+        boolean isReading;
+        synchronized (readLock) {
+            isReading = reading;
+        }
+        return isReading;
+    }
+
     public void stopReadingData() {
         synchronized (readLock) {
             reading = false;
         }
 
         currentPos = 0;
-        buffer = new byte[STD_SAMPLE_SIZE];
+        buffer = new byte[RESOLUTION];
 
         for (DeviceConnectionListener listener : listeners) {
             listener.onDeviceStopReading();
@@ -455,17 +553,15 @@ public class UsbConnection {
             Log.d("Visio", bytes.toString());
 
             for (byte b : bytes) {
-                synchronized (readLock) {
-                    if (!reading) {
-                        return;
-                    }
+                if (!isReading()) {
+                    return;
                 }
 
                 buffer[currentPos++] = b;
 
-                if (currentPos >= sampleSize) {
-                    final double[] valores = new double[sampleSize];
-                    for (int i = 0; i < sampleSize; i++) {
+                if (currentPos >= RESOLUTION) {
+                    final double[] valores = new double[RESOLUTION];
+                    for (int i = 0; i < RESOLUTION; i++) {
                         Number num = buffer[i];
                         valores[i] = num.doubleValue();
                     }
@@ -479,7 +575,7 @@ public class UsbConnection {
                         }
                     });
 
-                    buffer = new byte[STD_SAMPLE_SIZE];
+                    buffer = new byte[RESOLUTION];
                     currentPos = 0;
                 }
             }
@@ -494,9 +590,9 @@ public class UsbConnection {
             for (byte b : bytes) {
                 buffer[currentPos++] = b;
 
-                if (currentPos >= sampleSize) {
-                    final double[] valores = new double[sampleSize];
-                    for (int i = 0; i < sampleSize; i++) {
+                if (currentPos >= RESOLUTION) {
+                    final double[] valores = new double[RESOLUTION];
+                    for (int i = 0; i < RESOLUTION; i++) {
                         Number num = buffer[i];
                         valores[i] = num.doubleValue();
                     }
@@ -510,7 +606,7 @@ public class UsbConnection {
                         }
                     });
 
-                    buffer = new byte[STD_SAMPLE_SIZE];
+                    buffer = new byte[RESOLUTION];
                     currentPos = 0;
                 }
             }

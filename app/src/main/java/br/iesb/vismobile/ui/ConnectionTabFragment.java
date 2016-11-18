@@ -1,4 +1,4 @@
-package br.iesb.vismobile;
+package br.iesb.vismobile.ui;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
@@ -24,7 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import br.iesb.vismobile.file.ChartData;
+import br.iesb.vismobile.BuildConfig;
+import br.iesb.vismobile.R;
+import br.iesb.vismobile.ChartData;
 import br.iesb.vismobile.file.FileManager;
 import br.iesb.vismobile.usb.DeviceConnectionListener;
 import br.iesb.vismobile.usb.UsbConnection;
@@ -47,6 +50,7 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
     private TextView txtNumAmostras;
     private SeekBar seekTempoIntegra;
     private TextView txtTempoIntegra;
+    private EditText editFaixaEspectralDe, editFaixaEspectralA;
     private UsbConnection usbConn;
     private List<UsbDevice> devices;
 
@@ -144,7 +148,7 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
                 int checkedId = radioGroupOperacao.getCheckedRadioButtonId();
                 switch (checkedId) {
                     case R.id.radioUnico:
-                        usbConn.readOnce();
+                        usbConn.readUnique();
                         break;
                     case R.id.radioContinuo:
                         usbConn.startReadingData();
@@ -233,34 +237,38 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
         });
         seekNumAmostras.setProgress(usbConn.getSampleSize());
 
-        txtTempoIntegra = (TextView) view.findViewById(R.id.txtTempoIntegra);
-        // TODO:
-        txtTempoIntegra.setText(String.valueOf(2048));
-
-        seekTempoIntegra = (SeekBar) view.findViewById(R.id.seekTempoIntegra);
-        seekTempoIntegra.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (progress == 0) {
-                    progress = 1;
-                    seekBar.setProgress(progress);
-                }
-                txtTempoIntegra.setText(String.valueOf(progress));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                // TODO:
-//                usbConn.setSampleSize(seekBar.getProgress());
-            }
-        });
-
-        // TODO:
-        seekTempoIntegra.setProgress(2048);
+//        txtTempoIntegra = (TextView) view.findViewById(R.id.txtTempoIntegra);
+//        // TODO:
+//        txtTempoIntegra.setText(String.valueOf(2048));
+//
+//        seekTempoIntegra = (SeekBar) view.findViewById(R.id.seekTempoIntegra);
+//        seekTempoIntegra.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            @Override
+//            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//                if (progress == 0) {
+//                    progress = 1;
+//                    seekBar.setProgress(progress);
+//                }
+//                txtTempoIntegra.setText(String.valueOf(progress));
+//            }
+//
+//            @Override
+//            public void onStartTrackingTouch(SeekBar seekBar) {
+//            }
+//
+//            @Override
+//            public void onStopTrackingTouch(SeekBar seekBar) {
+//                // TODO:
+////                usbConn.setSampleSize(seekBar.getProgress());
+//            }
+//        });
+//
+//        // TODO:
+//        seekTempoIntegra.setProgress(2048);
+//
+//        // TODO:
+//        editFaixaEspectralDe = (EditText) view.findViewById(R.id.editFaixaEspectralDe);
+//        editFaixaEspectralA = (EditText) view.findViewById(R.id.editFaixaEspectralA);
     }
 
     @Override
@@ -297,9 +305,9 @@ public class ConnectionTabFragment extends Fragment implements DeviceConnectionL
     public void onDeviceRead(double[] data) {
         Log.d("Visio", "Bytes read: " + data);
 
-        Map<Integer, Double> chartDataMap = new TreeMap<>();
+        Map<Double, Double> chartDataMap = new TreeMap<>();
         for (int i = 0; i < data.length; i++) {
-            chartDataMap.put(i, data[i]);
+            chartDataMap.put((double)i, data[i]);
         }
 
         ChartData chartData = new ChartData(

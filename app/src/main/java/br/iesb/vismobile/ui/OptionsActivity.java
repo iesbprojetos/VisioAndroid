@@ -1,4 +1,4 @@
-package br.iesb.vismobile;
+package br.iesb.vismobile.ui;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import br.iesb.vismobile.R;
 import br.iesb.vismobile.usb.UsbConnection;
 
 public class OptionsActivity extends AppCompatActivity {

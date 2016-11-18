@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ConnectionTabFragment">
+    tools:context=".ui.ConnectionTabFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -11,14 +11,13 @@
             android:id="@+id/Espectro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#000033"
+
             android:orientation="vertical"
             android:padding="8dp">
 
-            <EditText
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:text="@string/espectro"
                 android:textColor="#d1cdcd" />
 
@@ -34,11 +33,10 @@
                 android:layout_height="wrap_content"
                 android:text="@string/parar" />
 
-            <EditText
+            <TextView
                 android:id="@+id/conexao"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:text="@string/conexao"
                 android:textColor="#d1cdcd" />
 
@@ -75,11 +73,10 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/conectar" />
 
-            <EditText
+            <TextView
                 android:id="@+id/modo_de_operacao"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:text="@string/modo_de_operacao"
                 android:textColor="#d1cdcd" />
 
@@ -104,11 +101,10 @@
                     android:textColor="#d1cdcd" />
             </RadioGroup>
 
-            <EditText
+            <TextView
                 android:id="@+id/unidade"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:text="@string/unidade"
                 android:textColor="#d1cdcd" />
 
@@ -133,16 +129,17 @@
                     android:textColor="#d1cdcd" />
             </RadioGroup>
 
-            <EditText
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:editable="false"
                 android:text="@string/numero_de_amostras"
-                android:textColor="#d1cdcd" />
+                android:textColor="#d1cdcd"
+                android:layout_marginBottom="4dp"/>
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_vertical_margin">
                 <SeekBar
                     android:id="@+id/seekNumAmostras"
                     android:layout_width="wrap_content"
@@ -164,67 +161,108 @@
                     android:text="0000"/>
             </RelativeLayout>
 
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:text="@string/tempo_de_integracao"
-                android:textColor="#d1cdcd" />
+            <!--<TextView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="@string/tempo_de_integracao"-->
+                <!--android:textColor="#d1cdcd"-->
+                <!--android:layout_marginBottom="4dp"/>-->
 
+            <!--<RelativeLayout-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginBottom="@dimen/activity_vertical_margin">-->
+                <!--<SeekBar-->
+                    <!--android:id="@+id/seekTempoIntegra"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_alignParentLeft="true"-->
+                    <!--android:layout_alignParentStart="true"-->
+                    <!--android:layout_toLeftOf="@+id/txtTempoIntegra"-->
+                    <!--android:layout_toStartOf="@+id/txtTempoIntegra"-->
+                    <!--android:max="2048"-->
+                    <!--android:layout_marginRight="8dp"-->
+                    <!--android:layout_marginEnd="8dp"/>-->
+                <!--<TextView-->
+                    <!--android:id="@+id/txtTempoIntegra"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_alignParentRight="true"-->
+                    <!--android:layout_alignParentEnd="true"-->
+                    <!--android:textColor="@android:color/white"-->
+                    <!--android:text="0000"/>-->
+            <!--</RelativeLayout>-->
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <SeekBar
-                    android:id="@+id/seekTempoIntegra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_toLeftOf="@+id/txtTempoIntegra"
-                    android:layout_toStartOf="@+id/txtTempoIntegra"
-                    android:max="2048"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginEnd="8dp"/>
-                <TextView
-                    android:id="@+id/txtTempoIntegra"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentEnd="true"
-                    android:textColor="@android:color/white"
-                    android:text="0000"/>
-            </RelativeLayout>
+            <!--<TextView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="@string/faixa_expectral"-->
+                <!--android:textColor="#d1cdcd"-->
+                <!--android:layout_marginBottom="4dp"/>-->
 
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:editable="false"
-                android:text="@string/faixa_expectral"
-                android:textColor="#d1cdcd" />
+            <!--<LinearLayout-->
+                <!--android:orientation="horizontal"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:weightSum="2">-->
+                <!--<RelativeLayout-->
+                    <!--android:layout_width="0dp"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_weight="1"-->
+                    <!--android:layout_marginEnd="8dp"-->
+                    <!--android:layout_marginRight="8dp">-->
+                    <!--<TextView-->
+                        <!--android:id="@+id/txtFaixaEspectralDe"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:text="De:"-->
+                        <!--android:textColor="#d1cdcd"-->
+                        <!--android:layout_alignParentTop="true"-->
+                        <!--android:layout_alignParentBottom="true"-->
+                        <!--android:layout_alignParentStart="true"-->
+                        <!--android:layout_alignParentLeft="true"-->
+                        <!--android:layout_marginEnd="4dp"-->
+                        <!--android:layout_marginRight="4dp"/>-->
+                    <!--<EditText-->
+                        <!--android:id="@+id/editFaixaEspectralDe"-->
+                        <!--android:layout_width="100dp"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:background="#ffffff"-->
+                        <!--android:layout_marginEnd="4dp"-->
+                        <!--android:layout_marginRight="4dp"-->
+                        <!--android:layout_alignParentTop="true"-->
+                        <!--android:layout_alignParentBottom="true"-->
+                        <!--android:layout_alignParentRight="true"-->
+                        <!--android:layout_alignParentEnd="true"-->
+                        <!--android:layout_toRightOf="@+id/txtFaixaEspectralDe"-->
+                        <!--android:layout_toEndOf="@+id/txtFaixaEspectralDe"/>-->
+                <!--</RelativeLayout>-->
+                <!--<RelativeLayout-->
+                    <!--android:layout_width="0dp"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_weight="1">-->
+                    <!--<TextView-->
+                        <!--android:id="@+id/txtFaixaEspectralA"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:text="A:"-->
+                        <!--android:textColor="#d1cdcd"-->
+                        <!--android:layout_marginEnd="4dp"-->
+                        <!--android:layout_marginRight="4dp"/>-->
+                    <!--<EditText-->
+                        <!--android:id="@+id/editFaixaEspectralA"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:background="#ffffff"-->
+                        <!--android:layout_toRightOf="@+id/txtFaixaEspectralA"-->
+                        <!--android:layout_toEndOf="@+id/txtFaixaEspectralA"-->
+                        <!--android:layout_alignParentTop="true"-->
+                        <!--android:layout_alignParentBottom="true"-->
+                        <!--android:layout_alignParentRight="true"-->
+                        <!--android:layout_alignParentEnd="true"/>-->
+                <!--</RelativeLayout>-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <EditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#ffffff"
-                    android:editable="true" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/PCA"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"></LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/Conexão"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"></LinearLayout>
+            <!--</LinearLayout>-->
 
         </LinearLayout>
     </ScrollView>

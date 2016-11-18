@@ -1,12 +1,13 @@
-package br.iesb.vismobile.file;
+package br.iesb.vismobile;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by dfcarvalho on 4/3/16.
  */
-public class ChartCollection {
+public class ChartCollection implements Iterable<ChartData> {
     private String name;
     private List<ChartData> charts;
 
@@ -37,5 +38,10 @@ public class ChartCollection {
 
     public int size() {
         return charts.size();
+    }
+
+    @Override
+    public Iterator<ChartData> iterator() {
+        return charts.iterator();
     }
 }

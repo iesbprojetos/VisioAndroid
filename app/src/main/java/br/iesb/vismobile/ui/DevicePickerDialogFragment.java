@@ -1,4 +1,4 @@
-package br.iesb.vismobile.usb;
+package br.iesb.vismobile.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,15 +13,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import br.iesb.vismobile.BuildConfig;
 import br.iesb.vismobile.R;
+import br.iesb.vismobile.usb.UsbConnection;
 
 /**
  * Classe DevicePickerDialogFragment (UI)
